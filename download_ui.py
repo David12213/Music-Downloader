@@ -1,15 +1,13 @@
 
 import tkinter as tk
 import yt_dlp
+import threading
+import queue
 from tkinter import ttk, filedialog, messagebox
-from pydub import AudioSegment
-
-
-input_file=""
 
 root = tk.Tk()
 root.title("Music Downloader")
-root.geometry("520x380")
+root.geometry("520x430")
 root.resizable(False, False)
 
 # Colors
@@ -77,9 +75,90 @@ url_entry = ttk.Entry(
 )
 url_entry.pack(padx=35, pady=(7, 15), ipady=7)
 
-def convertto_mp3(input_path, output_path):
-    audio = AudioSegment.from_file(input_path)
-    audio.export(output_path, format ="mp3")
+download_queue = queue.Queue()
+
+def progress_hook(data):
+    if data["status"] == "downloading":
+        downloaded = data.get("downloaded_bytes", 0)
+        total = (
+            data.get("total_bytes")
+            or data.get("total_bytes_estimate")
+        )
+
+        if total:
+            percentage = downloaded / total * 100
+        else:
+            percentage = None
+
+        speed = data.get("speed")
+        eta = data.get("eta")
+
+        download_queue.put(
+            ("progress", percentage, speed, eta)
+        )
+
+    elif data["status"] == "finished":
+        download_queue.put(
+            ("status", "Converting audio to MP3...")
+        )
+
+
+def process_download_queue():
+    try:
+        while True:
+            item = download_queue.get_nowait()
+            event = item[0]
+
+            if event == "progress":
+                _, percentage, speed, eta = item
+
+                if percentage is not None:
+                    progress_bar["value"] = percentage
+                    details = f"{percentage:.1f}%"
+
+                    if speed:
+                        details += f" | {speed / 1024**2:.2f} MB/s"
+
+                    if eta is not None:
+                        details += f" | ETA: {eta}s"
+
+                    progress_label.config(text=details)
+
+            elif event == "status":
+                progress_label.config(
+                    text=item[1],
+                    fg="#FFD166"
+                )
+
+            elif event == "success":
+                progress_bar["value"] = 100
+                progress_label.config(
+                    text="100% — Complete!",
+                    fg="#7CFC98"
+                )
+                download_button.config(state="normal")
+
+                messagebox.showinfo(
+                    "Success",
+                    "Your MP3 has been saved!"
+                )
+
+            elif event == "error":
+                progress_label.config(
+                    text="Download failed.",
+                    fg="#E53935"
+                )
+                download_button.config(state="normal")
+
+                messagebox.showerror(
+                    "Download Error",
+                    item[1]
+                )
+
+    except queue.Empty:
+        pass
+
+    root.after(100, process_download_queue)
 
 
 def start_download():
@@ -99,16 +178,18 @@ def start_download():
     if not output_folder:
         return
 
-    status_label.config(
+    progress_bar["value"] = 0
+    progress_label.config(
         text="Downloading audio...",
         fg="#FFD166"
     )
-    root.update_idletasks()
+    download_button.config(state="disabled")
 
     options = {
         "format": "bestaudio/best",
         "outtmpl": f"{output_folder}/%(title)s.%(ext)s",
         "noplaylist": True,
+        "progress_hooks": [progress_hook],
         "postprocessors": [{
             "key": "FFmpegExtractAudio",
             "preferredcodec": "mp3",
@@ -116,28 +197,21 @@ def start_download():
         }],
     }
 
-    try:
-        with yt_dlp.YoutubeDL(options) as downloader:
-            downloader.download([url])
+    def download_worker():
+        try:
+            with yt_dlp.YoutubeDL(options) as downloader:
+                downloader.download([url])
 
-        status_label.config(
-            text="Download complete!",
-            fg="#7CFC98"
-        )
-        messagebox.showinfo(
-            "Success",
-            "Your MP3 has been saved!"
-        )
+            download_queue.put(("success",))
 
-    except Exception as error:
-        status_label.config(
-            text="Download failed.",
-            fg="#E53935"
-        )
-        messagebox.showerror(
-            "Download Error",
-            str(error)
-        )
+        except Exception as error:
+            download_queue.put(("error", str(error)))
+
+    threading.Thread(
+        target=download_worker,
+        daemon=True
+    ).start()
+
 
 download_button = ttk.Button(
     root,
@@ -148,13 +222,23 @@ download_button = ttk.Button(
 )
 download_button.pack(pady=9)
 
-status_label = tk.Label(
+progress_bar = ttk.Progressbar(
     root,
-    text="Ready",
-    font=("Times New Roman", 10),
-    bg=BACKGROUND,
+    orient="horizontal",
+    length=360,
+    mode="determinate",
+    maximum = 100
+)
+progress_bar.pack(pady=4)
+
+progress_label=tk.Label(
+    root,
+    text="Ready to Download",
+    font=("Times New Roman", 12),
+    bg= BACKGROUND,
     fg=TEXT
 )
-status_label.pack(pady=12)
+progress_label.pack(pady=4)
 
+root.after(100, process_download_queue)
 root.mainloop()
