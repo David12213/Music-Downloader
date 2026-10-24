@@ -14,7 +14,6 @@ root.resizable(False, False)
 BACKGROUND = "#202020"
 PANEL = "#2B2B2B"
 TEXT = "#FFFFFF"
-ACCENT = "#E53935"
 
 root.configure(bg=BACKGROUND)
 
