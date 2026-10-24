@@ -3,11 +3,39 @@ import tkinter as tk
 import yt_dlp
 import threading
 import queue
+import json
+import os
 from tkinter import ttk, filedialog, messagebox
+
+HISTORY_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+      "music_downloader_history.json")
+
+def load_history():
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    with open(HISTORY_FILE, "r") as file:
+        return json.load(file)
+
+def save_history(history):
+    with open(HISTORY_FILE, "w") as file:
+        json.dump(history, file, indent=4)
+
+download_history = load_history()
+
+def refresh_history():
+    history_list.delete(0, tk.END)
+
+    for song in download_history:
+        history_list.insert(
+            tk.END,
+            f"{song.get("title", "Unknown title")} — {song["url"]}"
+        )
+        
 
 root = tk.Tk()
 root.title("Music Downloader")
-root.geometry("520x430")
+root.geometry("760x600")
 root.resizable(False, False)
 
 # Colors
@@ -130,6 +158,14 @@ def process_download_queue():
                 )
 
             elif event == "success":
+                url = item[1]
+                title = item[2]
+
+                download_history.append({
+                    "url": url,
+                    "title": title})
+                save_history(download_history)
+                refresh_history()
                 progress_bar["value"] = 100
                 progress_label.config(
                     text="100% — Complete!",
@@ -199,9 +235,10 @@ def start_download():
     def download_worker():
         try:
             with yt_dlp.YoutubeDL(options) as downloader:
+                info = downloader.extract_info(url, download = False)
+                title = info.get("title", "Unknown title")
                 downloader.download([url])
-
-            download_queue.put(("success",))
+            download_queue.put(("success", url, title))
 
         except Exception as error:
             download_queue.put(("error", str(error)))
@@ -238,6 +275,33 @@ progress_label=tk.Label(
     fg=TEXT
 )
 progress_label.pack(pady=4)
+
+download_button =ttk.Button(
+    root, 
+    text="Download Audio"
+)
+
+
+history_label = tk.Label(
+    root,
+    text="Download History",
+    font=("Times New Roman", 12, "bold"),
+    bg=BACKGROUND,
+    fg=TEXT
+)
+history_label.pack(pady=(12, 4))
+
+history_list = tk.Listbox(
+    root,
+    width=60,
+    height=5,
+    bg=PANEL,
+    fg=TEXT,
+    selectbackground="#555555",
+    font=("Times New Roman", 10)
+)
+history_list.pack(padx=35, pady=4)
+refresh_history()
 
 root.after(100, process_download_queue)
 root.mainloop()
