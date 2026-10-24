@@ -1,6 +1,11 @@
 
 import tkinter as tk
+import yt_dlp
 from tkinter import ttk, filedialog, messagebox
+from pydub import AudioSegment
+
+
+input_file=""
 
 root = tk.Tk()
 root.title("Music Downloader")
@@ -72,19 +77,67 @@ url_entry = ttk.Entry(
 )
 url_entry.pack(padx=35, pady=(7, 15), ipady=7)
 
+def convertto_mp3(input_path, output_path):
+    audio = AudioSegment.from_file(input_path)
+    audio.export(output_path, format ="mp3")
+
+
 def start_download():
     url = url_entry.get().strip()
 
     if not url:
         messagebox.showwarning(
             "Missing URL",
+            "Please enter a URL first."
         )
         return
 
+    output_folder = filedialog.askdirectory(
+        title="Choose where to save your MP3"
+    )
+
+    if not output_folder:
+        return
+
     status_label.config(
-        text="downloader not connected yet.",
+        text="Downloading audio...",
         fg="#FFD166"
     )
+    root.update_idletasks()
+
+    options = {
+        "format": "bestaudio/best",
+        "outtmpl": f"{output_folder}/%(title)s.%(ext)s",
+        "noplaylist": True,
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
+        }],
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(options) as downloader:
+            downloader.download([url])
+
+        status_label.config(
+            text="Download complete!",
+            fg="#7CFC98"
+        )
+        messagebox.showinfo(
+            "Success",
+            "Your MP3 has been saved!"
+        )
+
+    except Exception as error:
+        status_label.config(
+            text="Download failed.",
+            fg="#E53935"
+        )
+        messagebox.showerror(
+            "Download Error",
+            str(error)
+        )
 
 download_button = ttk.Button(
     root,
