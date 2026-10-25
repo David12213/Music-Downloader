@@ -33,10 +33,7 @@ def save_history(history):
     except OSError:
         messagebox.showerror("History Save Error", "Could not save download history.")
 
-
 download_history = load_history()
-
-
 
 def refresh_history():
     history_list.delete(0, tk.END)
@@ -94,8 +91,61 @@ def song_details(event=None):
         style="Custom.TButton",
     ).pack(pady=10)
 
+def open_settings():
+    settings_window = tk.Toplevel(root)
+    settings_window.title("Settings")
+    settings_window.geometry("340x270")
+    settings_window.configure(bg=BACKGROUND)
+    settings_window.resizable(False,False)
+
+    tk.Label(
+        settings_window,
+        text="SETTINGS",
+        font=("Times New Roman", 18, "bold"),
+        bg=BACKGROUND,
+        fg=TEXT,
+    ).pack(anchor="w", padx=24, pady=24)
+
+    tk.Label(
+        settings_window,
+        text="Audio quality",
+        font=("Times New Roman", 11, "bold"),
+        bg=BACKGROUND,
+        fg=TEXT,
+    ).pack(anchor="w", padx=24, pady=(16))
+
+    tk.Label(
+        settings_window,
+        text="Higher bitrates make larger files",
+        font=("Times New Roman", 11),
+        bg=BACKGROUND,
+        fg="#929292",
+    ).pack(anchor="w", padx=24, pady=12)
+
+    for quality in ("128", "192", "320"):
+        tk.Radiobutton(
+            settings_window,
+            text=f"{quality} kbps",
+            variable=audio_quality,
+            value=quality,
+            bg=BACKGROUND,
+            fg=TEXT,
+            selectcolor="#292929",
+            activebackground=BACKGROUND,
+            activeforeground=TEXT,
+            font=("Times New Roman", 11)
+        ).pack(anchor="w", padx=30, pady=2)
+
+    ttk.Button(
+        settings_window,
+        text="Done",
+        command=settings_window.destroy,
+        style="Custom.TButton",
+    ).pack(fill="x", padx=24, pady=(16,20))
+
 
 root = tk.Tk()
+audio_quality = tk.StringVar(master=root, value="192")
 root.title("Music Downloader")
 root.geometry("760x600")
 root.resizable(False, False)
@@ -119,14 +169,37 @@ style.configure(
 )
 style.map("Custom.TButton", background=[("active", "#3A3A3A")])
 
+
+style.configure(
+    "Custom.Horizontal.TProgressbar",
+    troughcolor="#2B2B2B",
+    background="#FFFFFF",
+    bordercolor="#2B2B2B",
+    lightcolor="#FFFFFF",
+    darkcolor="#FFFFFF",
+)
+
+
+
+header_frame = tk.Frame(root, bg=BACKGROUND)
+header_frame.pack(fill="x", padx=35, pady=(24, 4))
+
 title = tk.Label(
-    root,
+    header_frame,
     text="Music Downloader",
     font=("Times New Roman", 25, "bold"),
     bg=BACKGROUND,
     fg=TEXT,
 )
-title.pack(pady=(24, 4))
+title.pack(side="left")
+
+settings_button = ttk.Button(
+    header_frame,
+    text="Settings ⚙",
+    command=open_settings,
+    style="Custom.TButton",
+)
+settings_button.pack(side="right")
 
 subtitle = tk.Label(
     root,
@@ -255,7 +328,7 @@ def start_download():
             {
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
-                "preferredquality": "192",
+                "preferredquality": audio_quality.get(),
             }
         ],
     }
@@ -293,6 +366,7 @@ progress_bar = ttk.Progressbar(
     length=360,
     mode="determinate",
     maximum=100,
+    style="Custom.Horizontal.TProgressbar",
 )
 progress_bar.pack(pady=4)
 
