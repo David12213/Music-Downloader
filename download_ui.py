@@ -37,15 +37,62 @@ def save_history(history):
 download_history = load_history()
 
 
+
 def refresh_history():
-    if "history_list" not in globals():
+    history_list.delete(0, tk.END)
+
+    for song in download_history:
+        title = song.get("title") or song.get("url", "Unknown title")
+        history_list.insert(tk.END, title)
+
+
+def song_details(event=None):
+    selection = history_list.curselection()
+
+    if not selection:
         return
 
-    history_list.delete(0, tk.END)
-    for song in download_history:
-        title = song.get("title", "Unknown title")
-        url = song.get("url", "")
-        history_list.insert(tk.END, f"{title} — {url}")
+    index = selection[0]
+    song = download_history[index]
+    url = song.get("url", "")
+    title = song.get("title", "Unknown title")
+
+    popup = tk.Toplevel(root)
+    popup.title("Song Details")
+    popup.geometry("600x200")
+    popup.configure(bg=BACKGROUND)
+    popup.resizable(False, False)
+
+    tk.Label(
+        popup,
+        text=title,
+        font=("Times New Roman", 16, "bold"),
+        bg=BACKGROUND,
+        fg=TEXT,
+        wraplength=550
+    ).pack(pady=(15, 10))
+
+    url_entry = ttk.Entry(popup, width=75)
+    url_entry.pack(padx=20, pady=5, fill="x")
+    url_entry.insert(0, url)
+    url_entry.config(state="readonly")
+
+    def copy_url():
+        popup.clipboard_clear()
+        popup.clipboard_append(url)
+        popup.update()
+        messagebox.showinfo(
+            "Copied",
+            "URL copied to clipboard!",
+            parent=popup
+        )
+
+    ttk.Button(
+        popup,
+        text="Copy URL",
+        command=copy_url,
+        style="Custom.TButton",
+    ).pack(pady=10)
 
 
 root = tk.Tk()
@@ -260,7 +307,7 @@ progress_label.pack(pady=4)
 
 history_label = tk.Label(
     root,
-    text="Download History",
+    text="Download History (Double Click for URL)",
     font=("Times New Roman", 12, "bold"),
     bg=BACKGROUND,
     fg=TEXT,
@@ -277,6 +324,7 @@ history_list = tk.Listbox(
     font=("Times New Roman", 10),
 )
 history_list.pack(padx=35, pady=4)
+history_list.bind("<Double-Button-1>", song_details)
 
 refresh_history()
 
