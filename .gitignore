@@ -1,3 +1,4 @@
 .vscode
 .DS_Store
 music_downloader_history.json
+dist
