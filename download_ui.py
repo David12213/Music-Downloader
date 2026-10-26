@@ -5,6 +5,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 import tkinter as tk
 import yt_dlp
+import subprocess
 from tkinter import ttk, filedialog, messagebox
 
 HISTORY_FILE = Path(__file__).resolve().parent / "music_downloader_history.json"
@@ -34,9 +35,9 @@ download_history = load_history()
 def refresh_history():
     history_list.delete(0, tk.END)
 
-    for song in download_history:
+    for index, song in enumerate(reversed(download_history), start=1):
         title = song.get("title") or song.get("url", "Unknown title")
-        history_list.insert(tk.END, title)
+        history_list.insert(tk.END, f"{index}. {title}")
 
 def song_details(event=None):
     selection = history_list.curselection()
@@ -44,7 +45,7 @@ def song_details(event=None):
     if not selection:
         return
 
-    index = selection[0]
+    index = len(download_history) - 1 - selection[0]
     song = download_history[index]
     url = song.get("url", "")
     title = song.get("title", "Unknown title")
@@ -141,7 +142,7 @@ def open_settings():
 root = tk.Tk()
 audio_quality = tk.StringVar(master=root, value="192")
 root.title("Music Downloader")
-root.geometry("760x650")
+root.geometry("760x750")
 root.resizable(False, False)
 
 BACKGROUND = "#202020"
@@ -181,7 +182,7 @@ title = tk.Label(
     bg=BACKGROUND,
     fg=TEXT,
 )
-title.pack(side="left")
+title.place(relx=0.5, rely=0.5, anchor="center")
 
 settings_button = ttk.Button(
     header_frame,
@@ -207,10 +208,11 @@ url_label = tk.Label(
     bg=BACKGROUND,
     fg=TEXT,
 )
-url_label.pack(anchor="w", padx=35)
+url_label.pack(anchor="center")
 
 url_entry = ttk.Entry(root, width=55, style="Custom.TEntry")
 url_entry.pack(padx=35, pady=(7, 15), ipady=7)
+
 download_queue = queue.Queue()
 
 def progress_hook(data):
@@ -285,7 +287,7 @@ def process_download_queue():
                     song_progress_bar["value"] = song_percentage
                     song_progress_text = f"{song_percentage:.1f}%"
                 else:
-                    song_progress_text = "Calculating..."
+                    song_progress_text = "--"
 
                 progress_label.config(
                     text=(
@@ -308,7 +310,7 @@ def process_download_queue():
 
                     speed_label.config(text=f"Speed: {speed_text}")
                 else:
-                    speed_label.config(text="Speed: Calculating...")
+                    speed_label.config(text="Speed: --")
 
                 if eta is not None and eta > 0:
                     eta = int(eta)
@@ -323,7 +325,7 @@ def process_download_queue():
                             text=f"Time left: {eta}s"
                         )
                 else:
-                    time_label.config(text="Time left: Calculating...")
+                    time_label.config(text="Time left: --")
 
                 status_label.config(text="Downloading audio...", fg="#FFD166")
 
@@ -333,6 +335,7 @@ def process_download_queue():
             elif event == "success":
                 url = item[1]
                 title = item[2]
+                subprocess.Popen(["open", last_download_folder])
 
                 if not any(song.get("url") == url for song in download_history):
                     download_history.append({"url": url, "title": title})
@@ -380,7 +383,9 @@ def is_valid_url(value):
     parsed = urlparse(value)
     return bool(parsed.scheme and parsed.netloc)
 
+last_download_folder = None
 def start_download():
+    global last_download_folder
     url = url_entry.get().strip()
 
     if not url:
@@ -397,6 +402,8 @@ def start_download():
     if not output_folder:
         return
 
+    last_download_folder = output_folder
+
     overall_progress_bar["value"] = 0
     song_progress_bar["value"] = 0
 
@@ -404,8 +411,8 @@ def start_download():
     status_label.config(text="Starting download...", fg="#FFD166")
     current_song_label.config(text="")
 
-    speed_label.config(text="Speed: Calculating...")
-    time_label.config(text="Time left: Calculating...")
+    speed_label.config(text="Speed: --")
+    time_label.config(text="Time left: --")
 
     download_button.config(state="disabled")
 
@@ -493,7 +500,7 @@ progress_details_frame.pack(fill="x", padx=35, pady=(6, 2))
 
 speed_label = tk.Label(
     progress_details_frame,
-    text="Speed: Calculating...",
+    text="Speed: --",
     font=("Times New Roman", 10, "bold"),
     bg=BACKGROUND,
     fg="#BBBBBB",
@@ -502,7 +509,7 @@ speed_label.pack(side="left")
 
 time_label = tk.Label(
     progress_details_frame,
-    text="Time left: Calculating...",
+    text="Time left: --",
     font=("Times New Roman", 10, "bold"),
     bg=BACKGROUND,
     fg="#BBBBBB",
