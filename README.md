@@ -33,7 +33,7 @@ You can download from anything in these [sites](<https://github.com/yt-dlp/yt-dl
 
 ## Notice/Why I made:
 
-A lot of those "download youtube video" websites are super scummy and 50% of them turn out to be viruses. It's kinda hard to trust any of them. So, when I learned it's a program that you can download, I figured id build my own to get some music onto a ipod i found. Anyways, this project is my UI + the url downloader. As for now, the audio quality feels pretty solid and im satisfied.(Although I use airpods so some audiophile's may think it sucks.)
+A lot of those "download youtube video" websites are super scummy and 50% of them turn out to be viruses. It's kinda hard to trust any of them. So, when I learned it's a program that you can download, I figured id build my own to get some music onto a ipod i found. Anyways, this project is my UI + the url downloader. As for now, the audio quality feels pretty solid and im satisfied. (Although I could be wrong). I also easily uploaded the downloaded files to apple music to stream on the cloud, so it works great!
 
 
 
