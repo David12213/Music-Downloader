@@ -4,13 +4,14 @@ YouTube audio downloader with a simple UI. Download only things with permission/
 <img width="730" height="691" alt="Screenshot 2026-10-25 at 7 13 31 PM" src="https://github.com/user-attachments/assets/7a585fda-68d0-4a71-9d8c-78e73219239b" />
 
 ## How to Run
+> regardless of your method, FFmpeg is NEEDED for this to work!!! It converts to mp3.
 
 1. Install [FFmpeg](https://ffmpeg.org/). FFmpeg is neccesary for the download feature (yt-dlp specifically) to work. It is NOT included in the app (I installed via Homebrew)
-2. Go to release and download the zip of the app
+2. Go to release and [downlaod the zip file](https://github.com/David12213/Music-Downloader/releases/tag/v1.0). The file is .app (I use Mac). If your on windows, look at alternative below.
 3. run the app, paste your youtube url, and download away. All downloads are saved in a JSON file.
 
 Alternatively, you could:
-1. Clone/download this repository (Speicifcally music_downloader.py)
+1. Clone/download this repository (Speicifcally [music_downloader.py](https://github.com/David12213/Music-Downloader/blob/419abaf6b0a7b443a96f6c107355946c5c2f2cc5/music_downloader.py))
 2. install python, [FFmpeg](https://ffmpeg.org/), and the yt-dlp library
 3. run the code on your code editor.
 
@@ -29,3 +30,10 @@ You can download from anything in these [sites](<https://github.com/yt-dlp/yt-dl
 - a settings menu to the change the bitrate at which something is downloaded. There are 3 settings for it.
 - A history setting to show your past downloads. If ou double click on them, you will get the url. 
 - The folder you choose to download to will automatically open up when download finishes to show you where audio file went.
+
+## Notice/Why I made:
+
+A lot of those "download youtube video" websites are super scummy and 50% of them turn out to be viruses. It's kinda hard to trust any of them. So, when I learned it's a program that you can download, I figured id build my own to get some music onto a ipod i found. Anyways, this project is my UI + the url downloader. As for now, the audio quality feels pretty solid and im satisfied.(Although I use airpods so some audiophile's may think it sucks.)
+
+
+
